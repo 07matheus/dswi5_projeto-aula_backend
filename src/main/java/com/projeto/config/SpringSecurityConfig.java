@@ -1,16 +1,28 @@
 package com.projeto.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.projeto.models.service.componentes.CriptografarSenha;
+import com.projeto.models.service.security.UsuarioDetailsService;
+
 @Configuration
 @EnableWebSecurity
 public class SpringSecurityConfig {
+	
+	@Autowired
+	private CriptografarSenha cript;
+	
+	@Autowired
+	private UsuarioDetailsService userDetailsService; 
 
 	@Bean
 	protected SecurityFilterChain filterChainSecurity(HttpSecurity http) throws Exception {
@@ -27,6 +39,14 @@ public class SpringSecurityConfig {
 		
 		
 		return http.build();
+	}
+	
+	@Bean
+	AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+		var builder = http.getSharedObject(AuthenticationManagerBuilder.class);
+		builder.userDetailsService(userDetailsService)
+			   .passwordEncoder(cript.passwordEncoder());
+		return builder.build();
 	}
 	
 }

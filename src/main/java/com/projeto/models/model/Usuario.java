@@ -1,13 +1,18 @@
 package com.projeto.models.model;
 
-
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +30,7 @@ import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "TAB_USUARIO")
-public class Usuario implements Serializable {
+public class Usuario implements Serializable, UserDetails {
 
 	private static final long serialVersionUID = -2374616540565822199L;
     
@@ -197,10 +202,42 @@ public class Usuario implements Serializable {
 		Usuario other = (Usuario) obj;
 		return Objects.equals(id, other.id);
 	}
-	
-	
-	
-	
-	
+
+
+	@Transient
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		List<GrantedAuthority> autoridades = new ArrayList<>();
+		
+		for(Role role:this.getRoles()) {
+			autoridades.add(new SimpleGrantedAuthority("ROLE_" + role.getNome().toUpperCase()));
+		}
+		
+		return autoridades;
+	}
+
+	@Transient
+	@Override
+	public boolean isAccountNonExpired() {
+		return this.ativo;
+	}
+
+	@Transient
+	@Override
+	public boolean isAccountNonLocked() {
+		return this.ativo;
+	}
+
+	@Transient
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return this.ativo;
+	}
+
+	@Transient
+	@Override
+	public boolean isEnabled() {
+		return this.ativo;
+	}
 
 }
