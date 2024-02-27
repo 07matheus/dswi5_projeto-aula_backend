@@ -4,11 +4,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.management.BadAttributeValueExpException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -28,6 +33,39 @@ public class SistemaExceptionHandler {
 	
 	@Autowired
 	private MessageSource messageSource;
+	
+	@ExceptionHandler(UsernameNotFoundException.class)
+	public ResponseEntity<?> usernameNotFoundException(UsernameNotFoundException ex, WebRequest request){
+		MensagemErroSistema erro = new MensagemErroSistema();
+		erro.setStatus(HttpStatus.NOT_FOUND.value());
+		erro.setMensagem(ex.getMessage());
+		erro.setData(new Date());
+		erro.setError(true);
+		erro.setDescricao("O e-mail informado não está cadastrado!");
+		return ResponseEntity.ok().body(erro);
+	}
+	
+	@ExceptionHandler(LockedException.class)
+	public ResponseEntity<?> lockedException(LockedException ex, WebRequest request){
+		MensagemErroSistema erro = new MensagemErroSistema();
+		erro.setStatus(HttpStatus.LOCKED.value());
+		erro.setMensagem(ex.getMessage());
+		erro.setData(new Date());
+		erro.setError(true);
+		erro.setDescricao("Você não tem permissão para acessar o recurso atual.");
+		return ResponseEntity.ok().body(erro);
+	}
+	
+	@ExceptionHandler(BadCredentialsException.class)
+	public ResponseEntity<?> badCredentialsException(BadAttributeValueExpException ex, WebRequest request){
+		MensagemErroSistema erro = new MensagemErroSistema();
+		erro.setStatus(HttpStatus.BAD_REQUEST.value());
+		erro.setMensagem(ex.getMessage());
+		erro.setData(new Date());
+		erro.setError(true);
+		erro.setDescricao("A senha informada é inválida!");
+		return ResponseEntity.ok().body(erro);
+	}
 	
 	@ExceptionHandler(EntityNotFoundException.class)
 	public ResponseEntity<?> entityNotFoundException(EntityNotFoundException ex, WebRequest request){

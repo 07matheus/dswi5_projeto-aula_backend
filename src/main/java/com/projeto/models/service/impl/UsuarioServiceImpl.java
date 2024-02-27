@@ -16,6 +16,8 @@ import com.projeto.models.data.UsuarioRoleResponse;
 import com.projeto.models.model.Usuario;
 import com.projeto.models.repository.UsuarioRepository;
 import com.projeto.models.service.UsuarioService;
+import com.projeto.models.service.componentes.CriptografarSenha;
+import com.projeto.models.service.exception.ConfirmPasswordNaoInformada;
 import com.projeto.models.service.exception.EmailJaCadastradoException;
 import com.projeto.models.service.exception.EntityNotFoundException;
 import com.projeto.models.service.exception.PasswordDiferenteConfirmePasswordException;
@@ -32,12 +34,19 @@ public class UsuarioServiceImpl implements UsuarioService {
 	@Autowired
 	private ConverterEntity converter;
 	
+	@Autowired
+	private CriptografarSenha crypt;
+	
 	@Override
 	public UsuarioResponse save(UsuarioRequest entity) {
 
 		var usuario = converter.parseObject(entity, Usuario.class);
 		
 		var usuarioCadastrado = usuarioRepository.findUsuarioByEmail(usuario.getEmail());
+
+		if(usuario.getConfirmePassword().equals("")) {
+			throw new ConfirmPasswordNaoInformada("O campo confirme senha deve ser informado");
+		}
 		
 		if (usuarioCadastrado.isPresent() && usuarioCadastrado.get().equals(usuario)) {
 			throw new EmailJaCadastradoException("O e-mail informado já está cadastrado!!!");
@@ -47,17 +56,26 @@ public class UsuarioServiceImpl implements UsuarioService {
 	        throw new PasswordDiferenteConfirmePasswordException("A senha de confirmção difere da senha informada!!");		
 		}
 		
+		usuario.setPassword(criptografarSenha(usuario.getPassword()));
 		
 	    usuario = usuarioRepository.save(usuario);
 		var usuarioResponse = converter.parseObject(usuario, UsuarioResponse.class);
 		return usuarioResponse;
 		
 	}
+	
+	private String criptografarSenha(String password) {
+		return crypt.getPasswordEncoder().encode(password);
+	}
 
 	@Override
 	public UsuarioResponse update(Long id, UsuarioRequest entity) {
 		
-		var usuario = converter.parseObject(entity, Usuario.class);
+		var usuario = converter.parseObject(entity, Usuario.class);		
+		
+		if(usuario.getConfirmePassword().equals("")) {
+			throw new ConfirmPasswordNaoInformada("O campo confirme senha deve ser informado");
+		}
 		
 		if (!usuario.getPassword().equals(entity.getConfirmePassword())) {
 	        throw new PasswordDiferenteConfirmePasswordException("A senha de confirmção difere da senha informada!!");		
@@ -65,6 +83,8 @@ public class UsuarioServiceImpl implements UsuarioService {
 		
 		var usuarioCadastrado = usuarioRepository.findById(id)
 				.orElseThrow(()-> new EntityNotFoundException("Entidade não localizada!")  );
+		
+		usuario.setPassword(criptografarSenha(usuario.getPassword()));
 		
 		usuarioCadastrado.setEmail(usuario.getEmail());
 		usuarioCadastrado.setPassword(usuario.getPassword());

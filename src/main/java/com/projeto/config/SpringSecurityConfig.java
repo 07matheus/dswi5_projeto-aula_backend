@@ -32,6 +32,7 @@ public class SpringSecurityConfig {
 			.authorizeHttpRequests(
 				configurer->configurer /* MAPEAMENTO DE CONFIGURAÇÃO DE ACESSO AOS RECUROS POR MEIO DAS ROTAS */
 					.requestMatchers(ConfigProjeto.WHITE_LIST_URL).permitAll()
+					.requestMatchers(HttpMethod.POST, "/rest/login").permitAll()
 					.requestMatchers(HttpMethod.POST, "/rest/usuario/salvar").hasRole("ADMIN")
 					.requestMatchers(HttpMethod.GET, "/rest/usuario/listar").hasAnyRole("ADMIN", "USER", "GUEST")
 					.anyRequest().authenticated()
